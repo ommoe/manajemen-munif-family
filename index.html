@@ -1,0 +1,1703 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pocket Command: Mission 500jt & Family Cashflow</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .drag-over {
+            border-color: #10b981 !important;
+            background-color: rgba(16, 185, 129, 0.08) !important;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col pb-24">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 w-full max-w-sm px-4 pointer-events-none"></div>
+
+    <!-- Custom Modal for Quick Inputs & Confirmations -->
+    <div id="custom-modal" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-0 sm:p-4">
+        <div class="bg-slate-900 border-t sm:border border-slate-800 rounded-t-3xl sm:rounded-2xl w-full max-w-md p-6 shadow-2xl transform transition-all max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 id="modal-title" class="text-base font-bold text-white">Input Cepat</h3>
+                <button onclick="closeModal()" class="p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <div id="modal-body" class="space-y-4">
+                <!-- Dynamic Form Content -->
+            </div>
+        </div>
+    </div>
+
+    <!-- STICKY TOP HUD: Zone Switcher + Mission Profit & Bank Debt -->
+    <header class="sticky top-0 z-30 bg-slate-950/95 backdrop-blur-md border-b border-slate-800/80">
+        <div class="max-w-4xl mx-auto px-4 py-3 space-y-2.5">
+            <!-- Top Row: Brand, Zone Toggle & Sync -->
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                    <div class="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center text-white shrink-0 shadow-md shadow-emerald-600/20">
+                        <i data-lucide="wallet" class="w-4 h-4"></i>
+                    </div>
+                    <div class="truncate">
+                        <h1 class="text-xs sm:text-sm font-extrabold tracking-wide text-white uppercase truncate">POCKET COMMAND</h1>
+                        <p class="text-[10px] text-slate-400 truncate">Munif Muzaki • Family & Business</p>
+                    </div>
+                </div>
+
+                <!-- Interactive Zone Switcher Pill -->
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <button id="btn-zone-toggle" onclick="toggleZone()" class="px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition flex items-center gap-1.5">
+                        <!-- Populated by JS -->
+                    </button>
+                    <button onclick="syncToGoogleSheet()" title="Kirim State & Log ke Google Sheets" class="p-2 rounded-xl bg-slate-900 border border-slate-800 text-emerald-400 hover:border-emerald-500/40 transition">
+                        <i data-lucide="cloud-upload" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dual Macro Progress Bars: Mission Profit vs Bank Debt -->
+            <div class="grid grid-cols-2 gap-2.5 bg-slate-900/90 p-2.5 rounded-2xl border border-slate-800/80">
+                <!-- Tabungan Laba Bersih Target -->
+                <div onclick="openMissionSavingsModal()" class="cursor-pointer group">
+                    <div class="flex justify-between items-baseline text-[11px] mb-1">
+                        <span id="hud-profit-label" class="text-slate-400 font-medium group-hover:text-emerald-300 transition">Laba Bersih <span class="underline text-[10px]">(Edit)</span></span>
+                        <span id="hud-profit-text" class="font-mono font-bold text-emerald-400">Rp 0 (0%)</span>
+                    </div>
+                    <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                        <div id="hud-profit-bar" class="bg-emerald-500 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+                <!-- Pelunasan Bank -->
+                <div onclick="openDebtModal()" class="cursor-pointer group">
+                    <div class="flex justify-between items-baseline text-[11px] mb-1">
+                        <span id="hud-debt-label" class="text-slate-400 font-medium group-hover:text-rose-300 transition">Bank <span class="underline text-[10px]">(Update)</span></span>
+                        <span id="hud-debt-text" class="font-mono font-bold text-rose-400">0/10 Bln</span>
+                    </div>
+                    <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                        <div id="hud-debt-bar" class="bg-rose-500 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="flex-1 max-w-4xl w-full mx-auto px-4 pt-4 space-y-5">
+
+        <!-- VIEW 1: FAMILY CASHFLOW & QUICK-LOG ("AMANKAN DAPUR DULU") -->
+        <section id="view-cashflow" class="space-y-4">
+            <!-- Quick Action Horizontal Chips (Income & Expense) -->
+            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+                <button onclick="openIncomeModal('Ice True')" class="shrink-0 px-3.5 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center gap-1.5 transition">
+                    <i data-lucide="cup-soda" class="w-3.5 h-3.5"></i> + Profit Juice True
+                </button>
+                <button onclick="openIncomeModal('Nila Outbound')" class="shrink-0 px-3.5 py-2 rounded-xl bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-300 text-xs font-bold flex items-center gap-1.5 transition">
+                    <i data-lucide="compass" class="w-3.5 h-3.5"></i> + Honor Nila
+                </button>
+                <button onclick="openIncomeModal('Merch Kasembon')" class="shrink-0 px-3.5 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center gap-1.5 transition">
+                    <i data-lucide="shirt" class="w-3.5 h-3.5"></i> + Merch / Musik
+                </button>
+                <button onclick="openExpenseModal()" class="shrink-0 px-3.5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-xs font-bold flex items-center gap-1.5 transition">
+                    <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i> - Catat Belanja / Bayar Pos
+                </button>
+            </div>
+
+            <!-- AMPLOP PRIORITAS BULANAN ("AMANKAN DAPUR DULU") -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-3.5">
+                <div class="flex items-center justify-between gap-2">
+                    <div>
+                        <h2 class="text-sm font-extrabold text-white flex items-center gap-1.5">
+                            <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+                            <span>Pos Prioritas Bulan Ini ("Amankan Dapur Dulu")</span>
+                        </h2>
+                        <p class="text-[11px] text-slate-400">Klik ikon pensil pada tiap kartu untuk ubah saldo awal atau target bulanan.</p>
+                    </div>
+                    <button onclick="resetMonthlyEnvelopes()" class="shrink-0 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-300 transition">
+                        Reset Bulan Baru
+                    </button>
+                </div>
+
+                <!-- 4 Priority Envelopes Grid -->
+                <div id="envelopes-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Rendered dynamically via JS -->
+                </div>
+            </div>
+
+            <!-- Live Activity & Cashflow Stream -->
+            <div class="space-y-2">
+                <div class="flex items-center justify-between px-1">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Riwayat Arus Kas & Log Aktivitas</span>
+                    <span id="stream-count" class="text-[11px] font-mono text-slate-500">0 entri</span>
+                </div>
+                <div id="activity-stream" class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-3.5 space-y-2.5 max-h-[38vh] overflow-y-auto">
+                    <!-- Stream bubbles rendered via JS -->
+                </div>
+            </div>
+
+            <!-- Quick Command Chat Bar -->
+            <form onsubmit="handleCommandSubmit(event)" class="bg-slate-900 border border-slate-700/80 rounded-2xl p-2 flex items-center gap-2 shadow-lg">
+                <select id="cmd-type" class="bg-slate-800 text-slate-200 text-xs font-bold px-2.5 py-2.5 rounded-xl border border-slate-700 outline-none">
+                    <option value="task_sby">Tugas SBY</option>
+                    <option value="task_ksb">Tugas KSB</option>
+                    <option value="idea">Ide Konten</option>
+                    <option value="note">Catatan</option>
+                </select>
+                <input type="text" id="cmd-input" placeholder="Ketik cepat tugas, ide Kasembon Bercerita, atau catatan..." required class="flex-1 bg-transparent text-sm text-white placeholder-slate-500 px-2 py-2 outline-none">
+                <button type="submit" class="p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition shrink-0">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                </button>
+            </form>
+        </section>
+
+        <!-- VIEW 2: KANBAN BOARD & DAILY CHECKLIST ZONA -->
+        <section id="view-kanban" class="hidden space-y-5">
+            <!-- Active Zone Checklist Card -->
+            <div id="zone-checklist-card" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+                <!-- Populated by JS -->
+            </div>
+
+            <!-- 3-Column Kanban Board -->
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-sm font-extrabold text-white">Kanban Eksekusi Geografis</h2>
+                        <p class="text-[11px] text-slate-400">Tap tombol pindah atau geser kartu agar tidak menumpuk di satu hari.</p>
+                    </div>
+                    <button onclick="openNewKanbanModal()" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Kartu Baru
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                    <!-- Col 1: Surabaya -->
+                    <div ondragover="allowDrop(event)" ondragleave="leaveDrop(event)" ondrop="dropCard(event, 'surabaya')" class="bg-slate-900/80 border border-slate-800 rounded-2xl p-3 flex flex-col gap-2.5 min-h-[220px]">
+                        <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                            <span class="text-xs font-extrabold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-indigo-400"></span> Zona Surabaya (Sen-Kam)
+                            </span>
+                            <span id="count-surabaya" class="text-xs font-mono bg-slate-800 px-2 py-0.5 rounded text-slate-400">0</span>
+                        </div>
+                        <div id="col-surabaya" class="space-y-2 flex-1"></div>
+                    </div>
+
+                    <!-- Col 2: Kasembon -->
+                    <div ondragover="allowDrop(event)" ondragleave="leaveDrop(event)" ondrop="dropCard(event, 'kasembon')" class="bg-slate-900/80 border border-slate-800 rounded-2xl p-3 flex flex-col gap-2.5 min-h-[220px]">
+                        <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                            <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-300 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Zona Kasembon (Jum-Min)
+                            </span>
+                            <span id="count-kasembon" class="text-xs font-mono bg-slate-800 px-2 py-0.5 rounded text-slate-400">0</span>
+                        </div>
+                        <div id="col-kasembon" class="space-y-2 flex-1"></div>
+                    </div>
+
+                    <!-- Col 3: Delegasi / Selesai -->
+                    <div ondragover="allowDrop(event)" ondragleave="leaveDrop(event)" ondrop="dropCard(event, 'done')" class="bg-slate-900/80 border border-slate-800 rounded-2xl p-3 flex flex-col gap-2.5 min-h-[220px]">
+                        <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                            <span class="text-xs font-extrabold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-amber-400"></span> Delegasi / Selesai
+                            </span>
+                            <span id="count-done" class="text-xs font-mono bg-slate-800 px-2 py-0.5 rounded text-slate-400">0</span>
+                        </div>
+                        <div id="col-done" class="space-y-2 flex-1"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 3: FILTER ANTI-GAK ENAKAN & FOCUS TIMER -->
+        <section id="view-radar" class="hidden space-y-5">
+            <!-- Focus Timer Compact Card -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 text-center space-y-4">
+                <div class="flex items-center justify-between">
+                    <span id="timer-mode-badge" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                        Sesi Digital Surabaya (90m)
+                    </span>
+                    <div class="flex gap-1.5">
+                        <button onclick="setTimerPreset(90, 'Sesi Digital Surabaya (90m)')" class="px-2.5 py-1 rounded-lg bg-slate-800 text-[11px] font-semibold text-indigo-300">90m</button>
+                        <button onclick="setTimerPreset(180, 'Batching Konten Sabtu (3 Jam)')" class="px-2.5 py-1 rounded-lg bg-slate-800 text-[11px] font-semibold text-emerald-300">3 Jam</button>
+                        <button onclick="setTimerPreset(25, 'Audit Kas Cepat (25m)')" class="px-2.5 py-1 rounded-lg bg-slate-800 text-[11px] font-semibold text-amber-300">25m</button>
+                    </div>
+                </div>
+
+                <div id="timer-display" class="font-mono text-4xl sm:text-5xl font-extrabold tracking-tight text-white py-2">
+                    01:30:00
+                </div>
+
+                <div class="flex items-center justify-center gap-2.5">
+                    <button id="btn-timer-toggle" onclick="toggleTimer()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition">
+                        <i data-lucide="play" class="w-4 h-4"></i>
+                        <span>Mulai Fokus</span>
+                    </button>
+                    <button onclick="resetTimer()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs flex items-center gap-1.5 transition">
+                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                        <span>Reset</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Interactive Anti-Gak Enakan Decision Filter -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                <div class="flex items-center gap-2.5">
+                    <div class="p-2 rounded-xl bg-rose-500/20 text-rose-400">
+                        <i data-lucide="shield-alert" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-sm font-extrabold text-white">Filter Keputusan "Anti-Gak Enakan"</h2>
+                        <p class="text-[11px] text-slate-400">Saring permintaan orang lain agar energimu tidak bocor percuma.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-400 mb-1">Sumber Permintaan / Masalah</label>
+                        <select id="radar-source" class="w-full px-3 py-2.5 rounded-xl text-xs bg-slate-950 border border-slate-700 text-white outline-none">
+                            <option value="segandoel">Pasar Segandoel / Kegiatan Sosial Desa</option>
+                            <option value="outbound">Teknis Lapangan Nila Outbound</option>
+                            <option value="icetrue">Operasional Harian Ice True</option>
+                            <option value="other">Titipan / Urusan di Luar Target Keluarga</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-400 mb-1">Apakah Menghasilkan Cuan Nyata?</label>
+                        <select id="radar-profit" class="w-full px-3 py-2.5 rounded-xl text-xs bg-slate-950 border border-slate-700 text-white outline-none">
+                            <option value="no">Tidak / Hanya Gesekan Sosial</option>
+                            <option value="yes">Ya, Menambah Kas Dapur / Cicilan Bank</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button onclick="evaluateRadar()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs font-bold transition">
+                    Cek Keputusan Tegas
+                </button>
+
+                <div id="radar-result" class="hidden p-3.5 rounded-xl border text-xs leading-relaxed"></div>
+
+                <!-- Copyable Polite WhatsApp Boundary Templates -->
+                <div class="space-y-2.5 pt-2 border-t border-slate-800">
+                    <span class="text-xs font-bold text-slate-300 block">Template Jawaban WA Sopan (Klik Salin):</span>
+
+                    <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[11px] font-bold text-emerald-400">Untuk Kru Lapangan (Saat di Surabaya)</span>
+                            <button onclick="copyText('wa-1')" class="text-[11px] text-slate-400 hover:text-white flex items-center gap-1"><i data-lucide="copy" class="w-3 h-3"></i> Salin</button>
+                        </div>
+                        <p id="wa-1" class="text-xs text-slate-300">"Siap, untuk teknis lapangan hari ini saya percaya penuh ke keputusan teman-teman di lokasi ya sesuai SOP kita. Saya lagi fokus handle klien dari Surabaya. Kabari hasil akhirnya sore nanti saja."</p>
+                    </div>
+
+                    <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[11px] font-bold text-amber-400">Untuk Gesekan Pasar Segandoel</span>
+                            <button onclick="copyText('wa-2')" class="text-[11px] text-slate-400 hover:text-white flex items-center gap-1"><i data-lucide="copy" class="w-3 h-3"></i> Salin</button>
+                        </div>
+                        <p id="wa-2" class="text-xs text-slate-300">"Teman-teman pengurus, untuk operasional & penyelesaian teknis di Pasar Segandoel saya serahkan penuh wewenangnya ke musyawarah pengurus harian ya agar makin mandiri. Saya dukung dari belakang sebagai penasihat."</p>
+                    </div>
+
+                    <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[11px] font-bold text-indigo-400">Menjaga Hari Minggu untuk Keluarga</span>
+                            <button onclick="copyText('wa-3')" class="text-[11px] text-slate-400 hover:text-white flex items-center gap-1"><i data-lucide="copy" class="w-3 h-3"></i> Salin</button>
+                        </div>
+                        <p id="wa-3" class="text-xs text-slate-300">"Terima kasih infonya. Hari Minggu ini jadwal khusus keluarga saya setelah Senin-Kamis di Surabaya. Hal ini kita bahas dan eksekusi mulai Senin pagi ya."</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 4: SHEETS SYNC & BACKUP JSON -->
+        <section id="view-cloud" class="hidden space-y-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                <div class="flex items-start gap-3">
+                    <div class="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-400 shrink-0">
+                        <i data-lucide="sheet" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-sm font-extrabold text-white">Sinkronisasi Google Sheets (Pantau Bersama Istri)</h2>
+                        <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                            Hubungkan aplikasi ini ke Google Sheets agar istri di Kasembon bisa memantau saldo Pos Dapur, WiFi, Modal Putar, dan Cicilan Bank secara <em>real-time</em>.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- GAS Webhook URL -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-slate-300">URL Web App Google Apps Script:</label>
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <input type="url" id="gas-url-input" placeholder="https://script.google.com/macros/s/.../exec" class="flex-1 px-3.5 py-2.5 rounded-xl text-xs bg-slate-950 border border-slate-700 text-white outline-none focus:border-emerald-500">
+                        <button onclick="saveGasUrl()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition">
+                            Simpan URL
+                        </button>
+                    </div>
+                    <div class="flex flex-wrap gap-2 pt-1">
+                        <button onclick="pushStateToGas()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-300 text-xs font-bold flex items-center gap-1.5 transition">
+                            <i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i> Kirim State ke Sheet
+                        </button>
+                        <button onclick="pullFromGoogleSheet()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-sky-300 text-xs font-bold flex items-center gap-1.5 transition">
+                            <i data-lucide="download-cloud" class="w-3.5 h-3.5"></i> Tarik Data dari Sheets
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Code.gs Ready to Copy -->
+                <div class="space-y-2 pt-2 border-t border-slate-800">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-amber-300">Kode Google Apps Script (Code.gs):</span>
+                        <button onclick="copyGasCode()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-emerald-400 flex items-center gap-1.5 transition">
+                            <i data-lucide="copy" class="w-3.5 h-3.5"></i> Salin Kode
+                        </button>
+                    </div>
+                    <pre id="gas-code-block" class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-300 overflow-x-auto leading-relaxed">function getOrCreateSheet_(ss, name, headers) {
+  var sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+  }
+  if (headers &amp;&amp; headers.length &gt; 0 &amp;&amp; sheet.getLastRow() === 0) {
+    sheet.appendRow(headers);
+  }
+  return sheet;
+}
+
+function jsonResponse_(payload) {
+  return ContentService
+    .createTextOutput(JSON.stringify(payload))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var logsSheet = getOrCreateSheet_(ss, "Logs", [
+      "Waktu",
+      "Jenis",
+      "Kategori/Pos",
+      "Keterangan",
+      "Nominal (Rp)"
+    ]);
+    var stateSheet = getOrCreateSheet_(ss, "state", [
+      "Kunci",
+      "Diperbarui Pada",
+      "Payload JSON"
+    ]);
+
+    var raw = e &amp;&amp; e.postData &amp;&amp; e.postData.contents ? e.postData.contents : "{}";
+    var data = JSON.parse(raw);
+    var action = data.action || (data.state ? "save_state" : "append_log");
+
+    var logged = false;
+    var stateSaved = false;
+
+    if (data.entry || action === "append_log") {
+      var item = data.entry || data;
+      logsSheet.appendRow([
+        new Date(),
+        item.type || "Log",
+        item.category || "-",
+        item.text || "-",
+        Number(item.amount || 0)
+      ]);
+      logged = true;
+    }
+
+    if (data.state || action === "save_state") {
+      var snapshotObj = data.state || data.payload || {};
+      var snapshotJson = JSON.stringify(snapshotObj);
+      var now = new Date();
+
+      var lastRow = stateSheet.getLastRow();
+      var targetRow = -1;
+
+      if (lastRow &gt;= 2) {
+        var keys = stateSheet.getRange(2, 1, lastRow - 1, 1).getValues();
+        for (var i = 0; i &lt; keys.length; i++) {
+          if (String(keys[i][0]) === "current_state") {
+            targetRow = i + 2;
+            break;
+          }
+        }
+      }
+
+      if (targetRow &gt; 0) {
+        stateSheet.getRange(targetRow, 1, 1, 3).setValues([
+          ["current_state", now, snapshotJson]
+        ]);
+      } else {
+        stateSheet.appendRow(["current_state", now, snapshotJson]);
+      }
+
+      stateSaved = true;
+    }
+
+    return jsonResponse_({
+      status: "ok",
+      action: action,
+      logged: logged,
+      stateSaved: stateSaved
+    });
+  } catch (err) {
+    return jsonResponse_({
+      status: "error",
+      message: err &amp;&amp; err.message ? err.message : String(err)
+    });
+  }
+}
+
+function doGet(e) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var stateSheet = ss.getSheetByName("state");
+    var logsSheet = ss.getSheetByName("Logs");
+
+    var stateObj = null;
+    var updatedAt = null;
+
+    if (stateSheet &amp;&amp; stateSheet.getLastRow() &gt;= 2) {
+      var rows = stateSheet.getRange(2, 1, stateSheet.getLastRow() - 1, 3).getValues();
+      for (var i = rows.length - 1; i &gt;= 0; i--) {
+        if (String(rows[i][0]) === "current_state" &amp;&amp; rows[i][2]) {
+          stateObj = JSON.parse(String(rows[i][2]));
+          updatedAt = rows[i][1];
+          break;
+        }
+      }
+    }
+
+    var recentLogs = [];
+    if (logsSheet &amp;&amp; logsSheet.getLastRow() &gt;= 2) {
+      var totalRows = logsSheet.getLastRow() - 1;
+      var limit = Math.min(30, totalRows);
+      var startRow = logsSheet.getLastRow() - limit + 1;
+      var logValues = logsSheet.getRange(startRow, 1, limit, 5).getValues();
+
+      for (var j = logValues.length - 1; j &gt;= 0; j--) {
+        recentLogs.push({
+          time: logValues[j][0],
+          type: logValues[j][1],
+          category: logValues[j][2],
+          text: logValues[j][3],
+          amount: Number(logValues[j][4] || 0)
+        });
+      }
+    }
+
+    return jsonResponse_({
+      status: "ok",
+      message: "Pocket Command Web App Aktif",
+      updatedAt: updatedAt,
+      state: stateObj,
+      logs: recentLogs
+    });
+  } catch (err) {
+    return jsonResponse_({
+      status: "error",
+      message: err &amp;&amp; err.message ? err.message : String(err)
+    });
+  }
+}</pre>
+                </div>
+
+                <!-- Local Backup Export / Import & Fresh Start Reset -->
+                <div class="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                    <span class="text-xs font-semibold text-slate-400">Cadangan & Mulai Ulang dari Nol:</span>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="exportJsonData()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white flex items-center gap-1.5">
+                            <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i> Export JSON
+                        </button>
+                        <label class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white flex items-center gap-1.5 cursor-pointer">
+                            <i data-lucide="upload" class="w-3.5 h-3.5 text-amber-400"></i> Import JSON
+                            <input type="file" accept=".json" class="hidden" onchange="importJsonData(event)">
+                        </label>
+                        <button onclick="openResetAllToZeroModal()" class="px-3.5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-xs font-bold flex items-center gap-1.5 transition">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Reset Total ke Nol
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- BOTTOM MOBILE NAVIGATION BAR -->
+    <nav class="fixed bottom-0 inset-x-0 z-30 bg-slate-900/95 backdrop-blur-md border-t border-slate-800">
+        <div class="max-w-4xl mx-auto grid grid-cols-4">
+            <button onclick="switchView('cashflow')" id="nav-cashflow" class="nav-btn py-3 flex flex-col items-center justify-center gap-1 text-emerald-400">
+                <i data-lucide="wallet" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold">Arus Kas & Pos</span>
+            </button>
+            <button onclick="switchView('kanban')" id="nav-kanban" class="nav-btn py-3 flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-200">
+                <i data-lucide="kanban" class="w-5 h-5"></i>
+                <span class="text-[10px] font-semibold">Kanban & Zona</span>
+            </button>
+            <button onclick="switchView('radar')" id="nav-radar" class="nav-btn py-3 flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-200">
+                <i data-lucide="shield-alert" class="w-5 h-5"></i>
+                <span class="text-[10px] font-semibold">Filter & Timer</span>
+            </button>
+            <button onclick="switchView('cloud')" id="nav-cloud" class="nav-btn py-3 flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-200">
+                <i data-lucide="cloud" class="w-5 h-5"></i>
+                <span class="text-[10px] font-semibold">Sheets Sync</span>
+            </button>
+        </div>
+    </nav>
+
+    <script>
+        // ==========================================
+        // 1. STATE & FAMILY ENVELOPES CONFIGURATION
+        // ==========================================
+        const STORAGE_KEY = 'pocket_command_family_cashflow_v1';
+
+        const ENVELOPE_META = {
+            dapur: {
+                label: 'Dapur & Kebutuhan Anak',
+                target: 3000000,
+                splitRatio: 0.15, // 15% auto-split
+                color: 'blue',
+                icon: 'utensils'
+            },
+            utilitas: {
+                label: 'Listrik, Air & WiFi',
+                target: 1500000,
+                splitRatio: 0.08, // 8% auto-split
+                color: 'cyan',
+                icon: 'wifi'
+            },
+            bank: {
+                label: 'Cicilan Hutang Bank',
+                target: 9000000,
+                splitRatio: 0.45, // 45% auto-split
+                color: 'rose',
+                icon: 'landmark'
+            },
+            modal: {
+                label: 'Modal Putar & Bahan Baku',
+                target: 4500000,
+                splitRatio: 0.22, // 22% auto-split
+                color: 'amber',
+                icon: 'package'
+            }
+            // Remaining 10% goes straight to Mission Profit Savings!
+        };
+
+        const defaultState = {
+            activeZone: null, // 'surabaya' or 'kasembon'
+            mission500Savings: 0, // Laba bersih terkumpul
+            mission500Target: 500000000, // Target laba bersih (default Rp 500 Jt)
+            debtPaidMonths: 0, // Bulan cicilan yang sudah lunas
+            debtTotalAmount: 90000000, // Total pokok hutang bank (default Rp 90 Jt)
+            debtMonthlyAmount: 9000000, // Cicilan wajib per bulan (default Rp 9 Jt)
+            gasUrl: '',
+            envelopeTargets: {
+                dapur: 3000000,
+                utilitas: 1500000,
+                bank: 9000000,
+                modal: 4500000
+            },
+            envelopes: {
+                dapur: { allocated: 0, spent: 0 },
+                utilitas: { allocated: 0, spent: 0 },
+                bank: { allocated: 0, spent: 0 },
+                modal: { allocated: 0, spent: 0 }
+            },
+            zoneChecklist: {
+                surabaya: [
+                    { id: 'zs1', text: 'Fokus kerja utama karyawan Nila Outbound (08.00 - 17.00)', done: false },
+                    { id: 'zs2', text: 'Jadwalkan upload konten TikTok & balas lead klien korporat', done: false },
+                    { id: 'zs3', text: 'Audit laporan kas harian & stok Juice True via WA istri (15 mnt)', done: false },
+                    { id: 'zs4', text: 'Tampung komplain lapangan Kasembon untuk hari Jumat (Anti-Stres)', done: false }
+                ],
+                kasembon: [
+                    { id: 'zk1', text: 'Siapkan bahan baku pre-mix Juice True bersama istri untuk stok weekend', done: false },
+                    { id: 'zk2', text: 'Briefing delegasi 15 menit dengan kru lapangan (Fendi/Risky/Yudha)', done: false },
+                    { id: 'zk3', text: 'Sabtu Sore: Content Batching 4 video Kasembon Bercerita sekaligus', done: false },
+                    { id: 'zk4', text: 'Minggu Wajib: Quality Time penuh bersama istri & anak', done: false }
+                ]
+            },
+            kanban: [
+                { id: 'k1', col: 'surabaya', tag: 'TikTok', title: 'Upload 3 video pendek paket outbound & balas komentar prospek' },
+                { id: 'k2', col: 'kasembon', tag: 'Juice True', title: 'Racik stok sirup & bahan pre-mix untuk jualan Sabtu-Minggu' },
+                { id: 'k3', col: 'kasembon', tag: 'Konten', title: 'Syuting 4 stok cerita lokal Kasembon Bercerita (1 hari kelar)' },
+                { id: 'k4', col: 'done', tag: 'Delegasi', title: 'Serahkan teknis Pasar Segandoel ke pengurus Karang Taruna' }
+            ],
+            logs: []
+        };
+
+        let state = loadState();
+        let draggedCardId = null;
+
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return JSON.parse(JSON.stringify(defaultState));
+                const parsed = JSON.parse(raw);
+                return {
+                    ...JSON.parse(JSON.stringify(defaultState)),
+                    ...parsed,
+                    envelopeTargets: { ...defaultState.envelopeTargets, ...(parsed.envelopeTargets || {}) },
+                    envelopes: { ...defaultState.envelopes, ...(parsed.envelopes || {}) },
+                    zoneChecklist: { ...defaultState.zoneChecklist, ...(parsed.zoneChecklist || {}) }
+                };
+            } catch (e) {
+                return JSON.parse(JSON.stringify(defaultState));
+            }
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            } catch (e) {
+                showToast('Gagal menyimpan data lokal.', 'error');
+            }
+        }
+
+        function getSnapshotPayload() {
+            return {
+                activeZone: state.activeZone,
+                mission500Savings: state.mission500Savings,
+                mission500Target: state.mission500Target,
+                debtPaidMonths: state.debtPaidMonths,
+                debtTotalAmount: state.debtTotalAmount,
+                debtMonthlyAmount: state.debtMonthlyAmount,
+                envelopeTargets: state.envelopeTargets,
+                envelopes: state.envelopes,
+                zoneChecklist: state.zoneChecklist,
+                kanban: state.kanban
+            };
+        }
+
+        // ==========================================
+        // 2. INITIALIZATION & UI RENDERING
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!state.activeZone) {
+                const day = new Date().getDay(); // 1-4 = Mon-Thu (Surabaya), 5-0 = Fri-Sun (Kasembon)
+                state.activeZone = (day >= 1 && day <= 4) ? 'surabaya' : 'kasembon';
+            }
+            if (state.gasUrl) {
+                document.getElementById('gas-url-input').value = state.gasUrl;
+            }
+            renderAll();
+        });
+
+        function renderAll() {
+            renderZoneHeader();
+            updateHUD();
+            renderEnvelopes();
+            renderStream();
+            renderZoneChecklist();
+            renderKanban();
+            lucide.createIcons();
+        }
+
+        function formatRp(num) {
+            return 'Rp ' + Math.round(Number(num || 0)).toLocaleString('id-ID');
+        }
+
+        function formatShortRp(num) {
+            if (num >= 1000000) return 'Rp ' + (num / 1000000).toFixed(1).replace('.0', '') + ' Jt';
+            if (num >= 1000) return 'Rp ' + Math.round(num / 1000) + ' Rb';
+            return 'Rp ' + num;
+        }
+
+        function toggleZone() {
+            state.activeZone = state.activeZone === 'surabaya' ? 'kasembon' : 'surabaya';
+            saveState();
+            syncSnapshotSilent();
+            renderZoneHeader();
+            renderZoneChecklist();
+            lucide.createIcons();
+            showToast(`Beralih ke ${state.activeZone === 'surabaya' ? 'ZONA SURABAYA (Sen-Kam)' : 'ZONA KASEMBON (Jum-Min)'}`, 'info');
+        }
+
+        function renderZoneHeader() {
+            const btn = document.getElementById('btn-zone-toggle');
+            if (state.activeZone === 'surabaya') {
+                btn.className = 'px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition flex items-center gap-1.5 bg-indigo-500/20 text-indigo-300 border-indigo-500/40';
+                btn.innerHTML = `<i data-lucide="building-2" class="w-3.5 h-3.5"></i><span>SBY (Sen-Kam)</span>`;
+            } else {
+                btn.className = 'px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+                btn.innerHTML = `<i data-lucide="trees" class="w-3.5 h-3.5"></i><span>KSB (Jum-Min)</span>`;
+            }
+        }
+
+        function getEnvelopeTarget(key) {
+            const customVal = Number(state.envelopeTargets && state.envelopeTargets[key]);
+            if (customVal > 0) return customVal;
+            return ENVELOPE_META[key] ? ENVELOPE_META[key].target : 0;
+        }
+
+        function updateHUD() {
+            const target500 = Math.max(1, Number(state.mission500Target || 500000000));
+            const pct500 = Math.min(100, Math.round((Number(state.mission500Savings || 0) / target500) * 100));
+            document.getElementById('hud-profit-label').innerHTML = `Laba ${formatShortRp(target500).replace('Rp ', '')} <span class="underline text-[10px]">(Edit)</span>`;
+            document.getElementById('hud-profit-text').textContent = `${formatShortRp(state.mission500Savings)} (${pct500}%)`;
+            document.getElementById('hud-profit-bar').style.width = `${pct500}%`;
+
+            const monthlyDebt = Math.max(1, Number(state.debtMonthlyAmount || 9000000));
+            const totalDebt = Math.max(monthlyDebt, Number(state.debtTotalAmount || 90000000));
+            const totalMonths = Math.max(1, Math.round(totalDebt / monthlyDebt));
+            const paidMonths = Math.min(totalMonths, Math.max(0, Number(state.debtPaidMonths || 0)));
+            const debtPct = Math.min(100, Math.round((paidMonths / totalMonths) * 100));
+            const paidRpShort = formatShortRp(paidMonths * monthlyDebt);
+
+            document.getElementById('hud-debt-label').innerHTML = `Bank ${formatShortRp(totalDebt).replace('Rp ', '')} <span class="underline text-[10px]">(Update)</span>`;
+            document.getElementById('hud-debt-text').textContent = `${paidMonths}/${totalMonths} Bln (${paidRpShort})`;
+            document.getElementById('hud-debt-bar').style.width = `${debtPct}%`;
+        }
+
+        // ==========================================
+        // 3. PRIORITY ENVELOPES ("AMANKAN DAPUR DULU")
+        // ==========================================
+        function renderEnvelopes() {
+            const grid = document.getElementById('envelopes-grid');
+            const colorStyles = {
+                blue: { bar: 'bg-blue-500', badge: 'bg-blue-500/15 text-blue-300', icon: 'text-blue-400' },
+                cyan: { bar: 'bg-cyan-500', badge: 'bg-cyan-500/15 text-cyan-300', icon: 'text-cyan-400' },
+                rose: { bar: 'bg-rose-500', badge: 'bg-rose-500/15 text-rose-300', icon: 'text-rose-400' },
+                amber: { bar: 'bg-amber-500', badge: 'bg-amber-500/15 text-amber-300', icon: 'text-amber-400' }
+            };
+
+            grid.innerHTML = Object.keys(ENVELOPE_META).map(key => {
+                const meta = ENVELOPE_META[key];
+                const target = getEnvelopeTarget(key);
+                const env = state.envelopes[key] || { allocated: 0, spent: 0 };
+                const remaining = Math.max(0, env.allocated - env.spent);
+                const pct = target > 0 ? Math.min(100, Math.round((env.allocated / target) * 100)) : 0;
+                const isSafe = env.allocated >= target && target > 0;
+                const st = colorStyles[meta.color];
+
+                return `
+                    <div class="p-3.5 rounded-2xl bg-slate-950 border ${isSafe ? 'border-emerald-500/40' : 'border-slate-800'} space-y-2.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <i data-lucide="${meta.icon}" class="w-4 h-4 ${st.icon} shrink-0"></i>
+                                <span class="text-xs font-bold text-slate-200 truncate">${meta.label}</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full ${isSafe ? 'bg-emerald-500/20 text-emerald-300' : st.badge}">
+                                    ${isSafe ? 'AMAN 100%' : pct + '%'}
+                                </span>
+                                <button onclick="openEditEnvelopeModal('${key}')" title="Edit Saldo & Target Pos" class="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition">
+                                    <i data-lucide="pencil" class="w-3 h-3"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex items-baseline justify-between">
+                            <div>
+                                <div class="text-[10px] text-slate-500">Saldo Tersedia</div>
+                                <div class="text-sm font-mono font-extrabold text-white">${formatRp(remaining)}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-[10px] text-slate-500">Terkumpul / Target</div>
+                                <div class="text-[11px] font-mono text-slate-300">${formatShortRp(env.allocated)} / ${formatShortRp(target)}</div>
+                            </div>
+                        </div>
+
+                        <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                            <div class="${isSafe ? 'bg-emerald-500' : st.bar} h-1.5 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openEditEnvelopeModal(key) {
+            const meta = ENVELOPE_META[key];
+            const env = state.envelopes[key] || { allocated: 0, spent: 0 };
+            const target = getEnvelopeTarget(key);
+
+            openModal(`Edit Pos: ${meta.label}`, `
+                <form onsubmit="submitEditEnvelope(event, '${key}')" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Saldo Terkumpul (Rp)</label>
+                        <input type="number" id="env-allocated" value="${Number(env.allocated || 0)}" required min="0" step="500" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm font-mono outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Nominal Sudah Terpakai (Rp)</label>
+                        <input type="number" id="env-spent" value="${Number(env.spent || 0)}" required min="0" step="500" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm font-mono outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Target Bulanan Pos (Rp)</label>
+                        <input type="number" id="env-target" value="${Number(target || 0)}" required min="0" step="1000" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm font-mono outline-none focus:border-emerald-500">
+                    </div>
+                    <button type="submit" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition">
+                        Simpan Perubahan Pos
+                    </button>
+                </form>
+            `);
+            setTimeout(() => document.getElementById('env-allocated')?.focus(), 100);
+        }
+
+        function submitEditEnvelope(e, key) {
+            e.preventDefault();
+            const allocated = Math.max(0, parseInt(document.getElementById('env-allocated').value, 10) || 0);
+            const spent = Math.max(0, parseInt(document.getElementById('env-spent').value, 10) || 0);
+            const target = Math.max(0, parseInt(document.getElementById('env-target').value, 10) || 0);
+
+            state.envelopes[key] = { allocated, spent };
+            state.envelopeTargets[key] = target;
+
+            saveState();
+            syncSnapshotSilent();
+            renderEnvelopes();
+            lucide.createIcons();
+            closeModal();
+            showToast(`Pos ${ENVELOPE_META[key].label} diperbarui!`, 'success');
+        }
+
+        function resetMonthlyEnvelopes() {
+            openModal('Reset Pos Bulanan Baru', `
+                <div class="space-y-4">
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Fitur ini mengosongkan hitungan target bulanan <strong>Dapur, WiFi/Listrik, Cicilan Bank, dan Modal Putar</strong> untuk memulai bulan baru. Riwayat log dan tabungan target tetap aman tersimpan.
+                    </p>
+                    <button onclick="confirmResetEnvelopes()" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs">
+                        Ya, Mulai Siklus Bulan Baru
+                    </button>
+                </div>
+            `);
+        }
+
+        function confirmResetEnvelopes() {
+            Object.keys(state.envelopes).forEach(k => {
+                state.envelopes[k] = { allocated: 0, spent: 0 };
+            });
+            saveState();
+            renderEnvelopes();
+            lucide.createIcons();
+            closeModal();
+            addLog('Sistem', 'Reset Pos Bulanan', 'Siklus pos kebutuhan keluarga & modal bulan baru dimulai.', 0, 'emerald');
+            showToast('Pos bulanan berhasil di-reset!', 'success');
+        }
+
+        // ==========================================
+        // 4. INCOME (AUTO-SPLIT) & EXPENSE MODALS
+        // ==========================================
+        function openIncomeModal(sourceName) {
+            openModal(`Catat Pemasukan: ${sourceName}`, `
+                <form onsubmit="submitIncome(event, '${sourceName}')" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Nominal Profit / Honor Masuk (Rp)</label>
+                        <input type="number" id="inc-amount" placeholder="Contoh: 2000000" required min="1000" step="1000" class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white text-base font-mono outline-none focus:border-emerald-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Metode Alokasi Dana</label>
+                        <select id="inc-mode" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-semibold outline-none">
+                            <option value="autosplit">Auto-Split Prioritas (Dapur 15%, WiFi 8%, Bank 45%, Modal 22%, Tabungan 10%)</option>
+                            <option value="dapur">100% Masuk Pos Dapur & Anak</option>
+                            <option value="utilitas">100% Masuk Pos Listrik, Air & WiFi</option>
+                            <option value="bank">100% Masuk Pos Cicilan Bank</option>
+                            <option value="modal">100% Masuk Pos Modal Putar & Bahan Baku</option>
+                            <option value="mission500">100% Masuk Tabungan Laba Bersih</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Catatan Singkat</label>
+                        <input type="text" id="inc-note" placeholder="Misal: Profit harian Ice True / DP Outbound" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs outline-none">
+                    </div>
+
+                    <button type="submit" class="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition">
+                        Simpan & Distribusikan Dana
+                    </button>
+                </form>
+            `);
+            setTimeout(() => document.getElementById('inc-amount')?.focus(), 100);
+        }
+
+        function submitIncome(e, sourceName) {
+            e.preventDefault();
+            const amount = parseInt(document.getElementById('inc-amount').value, 10);
+            const mode = document.getElementById('inc-mode').value;
+            const note = document.getElementById('inc-note').value.trim() || `Pemasukan dari ${sourceName}`;
+            if (!amount || amount <= 0) return;
+
+            let summaryText = note;
+
+            if (mode === 'autosplit') {
+                let remainingToDistribute = amount;
+                const breakdown = [];
+
+                Object.keys(ENVELOPE_META).forEach(key => {
+                    const meta = ENVELOPE_META[key];
+                    const share = Math.round(amount * meta.splitRatio);
+                    state.envelopes[key].allocated += share;
+                    remainingToDistribute -= share;
+                    breakdown.push(`${key.toUpperCase()}: +${formatShortRp(share)}`);
+                });
+
+                if (remainingToDistribute > 0) {
+                    state.mission500Savings += remainingToDistribute;
+                    breakdown.push(`LABA: +${formatShortRp(remainingToDistribute)}`);
+                }
+                summaryText = `${note} [Auto-Split → ${breakdown.join(', ')}]`;
+            } else if (mode === 'mission500') {
+                state.mission500Savings += amount;
+                summaryText = `${note} [100% Tabungan Laba Bersih]`;
+            } else if (state.envelopes[mode]) {
+                state.envelopes[mode].allocated += amount;
+                summaryText = `${note} [100% Pos ${ENVELOPE_META[mode].label}]`;
+            }
+
+            saveState();
+            updateHUD();
+            renderEnvelopes();
+            lucide.createIcons();
+            addLog('Pemasukan', `Profit ${sourceName}`, summaryText, amount, 'emerald');
+            closeModal();
+            showToast(`+${formatShortRp(amount)} berhasil dialokasikan!`, 'success');
+        }
+
+        function openExpenseModal() {
+            openModal('Catat Pengeluaran / Belanja Pos', `
+                <form onsubmit="submitExpense(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Ambil Dari Pos Mana?</label>
+                        <select id="exp-pos" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-semibold outline-none">
+                            <option value="dapur">Pos Dapur & Kebutuhan Anak (Sisa: ${formatRp(Math.max(0, state.envelopes.dapur.allocated - state.envelopes.dapur.spent))})</option>
+                            <option value="utilitas">Pos Listrik, Air & WiFi (Sisa: ${formatRp(Math.max(0, state.envelopes.utilitas.allocated - state.envelopes.utilitas.spent))})</option>
+                            <option value="modal">Pos Modal Putar & Bahan Baku (Sisa: ${formatRp(Math.max(0, state.envelopes.modal.allocated - state.envelopes.modal.spent))})</option>
+                            <option value="bank">Pos Cicilan Hutang Bank (Sisa: ${formatRp(Math.max(0, state.envelopes.bank.allocated - state.envelopes.bank.spent))})</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Nominal Keluar (Rp)</label>
+                        <input type="number" id="exp-amount" placeholder="Contoh: 150000" required min="500" step="500" class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white text-base font-mono outline-none focus:border-rose-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Keperluan Belanja / Bayar</label>
+                        <input type="text" id="exp-note" placeholder="Misal: Bayar WiFi rumah / Beli cup & bubuk Ice True" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs outline-none">
+                    </div>
+                    <button type="submit" class="w-full py-3.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm transition">
+                        Catat Pengeluaran Pos
+                    </button>
+                </form>
+            `);
+            setTimeout(() => document.getElementById('exp-amount')?.focus(), 100);
+        }
+
+        function submitExpense(e) {
+            e.preventDefault();
+            const pos = document.getElementById('exp-pos').value;
+            const amount = parseInt(document.getElementById('exp-amount').value, 10);
+            const note = document.getElementById('exp-note').value.trim();
+            if (!amount || amount <= 0) return;
+
+            state.envelopes[pos].spent += amount;
+            saveState();
+            renderEnvelopes();
+            lucide.createIcons();
+            addLog('Pengeluaran', ENVELOPE_META[pos].label, note, -amount, 'rose');
+            closeModal();
+            showToast(`Pengeluaran ${formatShortRp(amount)} tercatat di ${ENVELOPE_META[pos].label}.`, 'info');
+        }
+
+        function openMissionSavingsModal() {
+            openModal('Edit Tabungan & Target Laba Bersih', `
+                <form onsubmit="submitMissionSavings(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Laba Bersih Terkumpul Saat Ini (Rp)</label>
+                        <input type="number" id="m500-savings" value="${Number(state.mission500Savings || 0)}" required min="0" step="1000" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm font-mono outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Target Akhir Laba Bersih (Rp)</label>
+                        <input type="number" id="m500-target" value="${Number(state.mission500Target || 500000000)}" required min="1000" step="100000" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm font-mono outline-none focus:border-emerald-500">
+                    </div>
+                    <button type="submit" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition">
+                        Simpan Tabungan & Target
+                    </button>
+                </form>
+            `);
+            setTimeout(() => document.getElementById('m500-savings')?.focus(), 100);
+        }
+
+        function submitMissionSavings(e) {
+            e.preventDefault();
+            state.mission500Savings = Math.max(0, parseInt(document.getElementById('m500-savings').value, 10) || 0);
+            state.mission500Target = Math.max(1000, parseInt(document.getElementById('m500-target').value, 10) || 500000000);
+
+            saveState();
+            syncSnapshotSilent();
+            updateHUD();
+            closeModal();
+            showToast('Tabungan & target laba bersih diperbarui!', 'success');
+        }
+
+        function openDebtModal() {
+            const monthlyDebt = Math.max(1, Number(state.debtMonthlyAmount || 9000000));
+            const totalDebt = Math.max(monthlyDebt, Number(state.debtTotalAmount || 90000000));
+            const totalMonths = Math.max(1, Math.round(totalDebt / monthlyDebt));
+            const paidMonths = Math.min(totalMonths, Math.max(0, Number(state.debtPaidMonths || 0)));
+            const remainingDebt = Math.max(0, totalDebt - (paidMonths * monthlyDebt));
+
+            openModal('Pengaturan & Pelunasan Cicilan Bank', `
+                <div class="space-y-4">
+                    <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-2">
+                        <div>
+                            <div class="text-xs text-slate-400">Progres Pelunasan</div>
+                            <div class="text-base font-extrabold text-rose-400">${paidMonths} / ${totalMonths} Bulan Lunas</div>
+                            <div class="text-[11px] text-slate-500">Sisa hutang: ${formatRp(remainingDebt)}</div>
+                        </div>
+                        <div class="flex gap-2 shrink-0">
+                            <button onclick="adjustDebt(-1)" class="px-3 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">-1</button>
+                            <button onclick="adjustDebt(1)" class="px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold">+1 Lunas</button>
+                        </div>
+                    </div>
+
+                    <form onsubmit="submitDebtConfig(event)" class="space-y-3 pt-2 border-t border-slate-800">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">Total Pokok Hutang Bank (Rp)</label>
+                            <input type="number" id="debt-total-input" value="${totalDebt}" required min="1000" step="100000" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-mono outline-none focus:border-rose-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 mb-1">Cicilan / Bulan (Rp)</label>
+                                <input type="number" id="debt-monthly-input" value="${monthlyDebt}" required min="1000" step="100000" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-mono outline-none focus:border-rose-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 mb-1">Bulan Sudah Lunas</label>
+                                <input type="number" id="debt-paid-input" value="${paidMonths}" required min="0" max="120" step="1" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-mono outline-none focus:border-rose-500">
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition">
+                            Simpan Pengaturan Cicilan
+                        </button>
+                    </form>
+                </div>
+            `);
+        }
+
+        function submitDebtConfig(e) {
+            e.preventDefault();
+            const monthlyDebt = Math.max(1000, parseInt(document.getElementById('debt-monthly-input').value, 10) || 9000000);
+            const totalDebt = Math.max(monthlyDebt, parseInt(document.getElementById('debt-total-input').value, 10) || 90000000);
+            const totalMonths = Math.max(1, Math.round(totalDebt / monthlyDebt));
+            const paidMonths = Math.min(totalMonths, Math.max(0, parseInt(document.getElementById('debt-paid-input').value, 10) || 0));
+
+            state.debtMonthlyAmount = monthlyDebt;
+            state.debtTotalAmount = totalDebt;
+            state.debtPaidMonths = paidMonths;
+            state.envelopeTargets.bank = monthlyDebt;
+
+            saveState();
+            syncSnapshotSilent();
+            updateHUD();
+            renderEnvelopes();
+            lucide.createIcons();
+            closeModal();
+            showToast('Pengaturan cicilan bank disimpan!', 'success');
+        }
+
+        function adjustDebt(delta) {
+            const monthlyDebt = Math.max(1, Number(state.debtMonthlyAmount || 9000000));
+            const totalDebt = Math.max(monthlyDebt, Number(state.debtTotalAmount || 90000000));
+            const totalMonths = Math.max(1, Math.round(totalDebt / monthlyDebt));
+
+            state.debtPaidMonths = Math.max(0, Math.min(totalMonths, Number(state.debtPaidMonths || 0) + delta));
+            if (delta > 0) {
+                state.envelopes.bank.spent += monthlyDebt;
+                addLog('Cicilan Bank', 'Pelunasan Bank', `Cicilan bulan ke-${state.debtPaidMonths} (${formatRp(monthlyDebt)}) LUNAS!`, -monthlyDebt, 'rose');
+            } else {
+                syncSnapshotSilent();
+            }
+            saveState();
+            updateHUD();
+            renderEnvelopes();
+            lucide.createIcons();
+            closeModal();
+        }
+
+        // ==========================================
+        // 5. LIVE STREAM & QUICK COMMAND BAR
+        // ==========================================
+        function addLog(type, category, text, amount = 0, color = 'emerald') {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            const entry = {
+                id: Date.now(),
+                time: timeStr,
+                type,
+                category,
+                text,
+                amount,
+                color
+            };
+            state.logs.unshift(entry);
+            saveState();
+            renderStream();
+            pushSingleToGas(entry);
+        }
+
+        function renderStream() {
+            const container = document.getElementById('activity-stream');
+            document.getElementById('stream-count').textContent = `${state.logs.length} entri`;
+
+            if (state.logs.length === 0) {
+                container.innerHTML = `<div class="text-xs text-slate-500 text-center py-6">Belum ada transaksi atau catatan. Mulai catat pemasukan atau pengeluaran di atas.</div>`;
+                return;
+            }
+
+            const badgeMap = {
+                emerald: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+                blue: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
+                amber: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+                purple: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
+                rose: 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+            };
+
+            container.innerHTML = state.logs.map(log => {
+                const isNeg = log.amount < 0;
+                const absAmt = Math.abs(log.amount);
+                return `
+                    <div class="p-3 rounded-xl bg-slate-950/90 border border-slate-800/90 space-y-1">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${badgeMap[log.color] || badgeMap.emerald}">
+                                ${log.category}
+                            </span>
+                            <span class="text-[10px] font-mono text-slate-500">${log.time}</span>
+                        </div>
+                        <p class="text-xs text-slate-200 leading-relaxed">${log.text}</p>
+                        ${absAmt > 0 ? `<div class="text-xs font-mono font-bold ${isNeg ? 'text-rose-400' : 'text-emerald-400'}">${isNeg ? '-' : '+'} ${formatRp(absAmt)}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function handleCommandSubmit(e) {
+            e.preventDefault();
+            const type = document.getElementById('cmd-type').value;
+            const input = document.getElementById('cmd-input');
+            const val = input.value.trim();
+            if (!val) return;
+
+            if (type === 'task_sby') {
+                state.kanban.unshift({ id: 'kb_' + Date.now(), col: 'surabaya', tag: 'Surabaya', title: val });
+                addLog('Tugas', 'Zona Surabaya', val, 0, 'blue');
+                renderKanban();
+            } else if (type === 'task_ksb') {
+                state.kanban.unshift({ id: 'kb_' + Date.now(), col: 'kasembon', tag: 'Kasembon', title: val });
+                addLog('Tugas', 'Zona Kasembon', val, 0, 'emerald');
+                renderKanban();
+            } else if (type === 'idea') {
+                state.kanban.unshift({ id: 'kb_' + Date.now(), col: 'kasembon', tag: 'Batching Konten', title: val });
+                addLog('Ide Konten', 'Kasembon Bercerita', val, 0, 'purple');
+                renderKanban();
+            } else {
+                addLog('Catatan', 'Catatan Cepat', val, 0, 'amber');
+            }
+
+            input.value = '';
+            saveState();
+            showToast('Tercatat!', 'success');
+        }
+
+        // ==========================================
+        // 6. ZONE CHECKLIST & KANBAN BOARD
+        // ==========================================
+        function renderZoneChecklist() {
+            const card = document.getElementById('zone-checklist-card');
+            const isSby = state.activeZone === 'surabaya';
+            const list = state.zoneChecklist[state.activeZone] || [];
+
+            card.innerHTML = `
+                <div class="flex items-center justify-between gap-2">
+                    <div>
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider ${isSby ? 'text-indigo-400' : 'text-emerald-400'}">
+                            ${isSby ? 'Checklist Zona Surabaya (Senin - Kamis)' : 'Checklist Zona Kasembon (Jumat - Minggu)'}
+                        </span>
+                        <h3 class="text-sm font-bold text-white mt-0.5">Prioritas Anti-Burnout Minggu Ini</h3>
+                    </div>
+                    <button onclick="resetChecklist()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-300">
+                        Reset Centang
+                    </button>
+                </div>
+                <div class="space-y-2">
+                    ${list.map(item => `
+                        <button onclick="toggleCheckItem('${item.id}')" class="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-start gap-2.5 text-left transition ${item.done ? 'opacity-60' : ''}">
+                            <i data-lucide="${item.done ? 'check-square' : 'square'}" class="w-4 h-4 mt-0.5 shrink-0 ${item.done ? 'text-emerald-400' : 'text-slate-500'}"></i>
+                            <span class="text-xs ${item.done ? 'line-through text-slate-500' : 'text-slate-200'}">${item.text}</span>
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function toggleCheckItem(id) {
+            const list = state.zoneChecklist[state.activeZone];
+            const item = list.find(i => i.id === id);
+            if (item) {
+                item.done = !item.done;
+                saveState();
+                syncSnapshotSilent();
+                renderZoneChecklist();
+                lucide.createIcons();
+            }
+        }
+
+        function resetChecklist() {
+            state.zoneChecklist[state.activeZone].forEach(i => i.done = false);
+            saveState();
+            syncSnapshotSilent();
+            renderZoneChecklist();
+            lucide.createIcons();
+            showToast('Checklist zona aktif di-reset.', 'info');
+        }
+
+        function renderKanban() {
+            ['surabaya', 'kasembon', 'done'].forEach(col => {
+                const items = state.kanban.filter(k => k.col === col);
+                document.getElementById(`count-${col}`).textContent = items.length;
+                const box = document.getElementById(`col-${col}`);
+
+                if (items.length === 0) {
+                    box.innerHTML = `<div class="text-[11px] text-slate-600 text-center py-6 border border-dashed border-slate-800 rounded-xl">Kosong</div>`;
+                    return;
+                }
+
+                box.innerHTML = items.map(item => `
+                    <div draggable="true" ondragstart="dragCard(event, '${item.id}')" class="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2 cursor-grab">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-slate-800 text-slate-300">${item.tag}</span>
+                            <button onclick="deleteKanban('${item.id}')" class="text-slate-500 hover:text-rose-400"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                        </div>
+                        <p class="text-xs text-slate-200 leading-snug">${item.title}</p>
+                        <div class="flex gap-1 pt-1 border-t border-slate-900">
+                            ${col !== 'surabaya' ? `<button onclick="moveKanban('${item.id}', 'surabaya')" class="flex-1 py-1 rounded bg-indigo-500/15 text-indigo-300 text-[10px] font-bold">SBY</button>` : ''}
+                            ${col !== 'kasembon' ? `<button onclick="moveKanban('${item.id}', 'kasembon')" class="flex-1 py-1 rounded bg-emerald-500/15 text-emerald-300 text-[10px] font-bold">KSB</button>` : ''}
+                            ${col !== 'done' ? `<button onclick="moveKanban('${item.id}', 'done')" class="flex-1 py-1 rounded bg-amber-500/15 text-amber-300 text-[10px] font-bold">Selesai</button>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            });
+            lucide.createIcons();
+        }
+
+        function moveKanban(id, col) {
+            const card = state.kanban.find(k => k.id === id);
+            if (!card) return;
+            card.col = col;
+            saveState();
+            renderKanban();
+            if (col === 'done') {
+                addLog('Selesai', 'Kanban Selesai', card.title, 0, 'amber');
+            } else {
+                syncSnapshotSilent();
+            }
+        }
+
+        function deleteKanban(id) {
+            state.kanban = state.kanban.filter(k => k.id !== id);
+            saveState();
+            syncSnapshotSilent();
+            renderKanban();
+        }
+
+        function dragCard(ev, id) { draggedCardId = id; }
+        function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
+        function leaveDrop(ev) { ev.currentTarget.classList.remove('drag-over'); }
+        function dropCard(ev, col) {
+            ev.preventDefault();
+            ev.currentTarget.classList.remove('drag-over');
+            if (draggedCardId) { moveKanban(draggedCardId, col); draggedCardId = null; }
+        }
+
+        function openNewKanbanModal() {
+            openModal('Tambah Kartu Kanban', `
+                <form onsubmit="submitNewKanban(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Zona Eksekusi</label>
+                        <select id="kb-col" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs">
+                            <option value="surabaya">Zona Surabaya (Senin - Kamis)</option>
+                            <option value="kasembon">Zona Kasembon (Jumat - Minggu)</option>
+                            <option value="done">Delegasi / Selesai</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Label Kategori</label>
+                        <input type="text" id="kb-tag" placeholder="Misal: Ice True / Kru / Batching" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Tugas</label>
+                        <input type="text" id="kb-title" placeholder="Deskripsi singkat tugas..." required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs">
+                    </div>
+                    <button type="submit" class="w-full py-3 rounded-xl bg-emerald-600 text-white font-bold text-xs">Simpan Kartu</button>
+                </form>
+            `);
+        }
+
+        function submitNewKanban(e) {
+            e.preventDefault();
+            state.kanban.unshift({
+                id: 'kb_' + Date.now(),
+                col: document.getElementById('kb-col').value,
+                tag: document.getElementById('kb-tag').value.trim(),
+                title: document.getElementById('kb-title').value.trim()
+            });
+            saveState();
+            syncSnapshotSilent();
+            renderKanban();
+            closeModal();
+            showToast('Kartu Kanban ditambahkan!', 'success');
+        }
+
+        // ==========================================
+        // 7. FOCUS TIMER & ANTI-GAK ENAKAN RADAR
+        // ==========================================
+        let timerSeconds = 90 * 60;
+        let timerDefault = 90 * 60;
+        let timerInt = null;
+
+        function formatTimer(sec) {
+            const h = Math.floor(sec / 3600);
+            const m = Math.floor((sec % 3600) / 60);
+            const s = sec % 60;
+            return [h, m, s].map(v => String(v).padStart(2, '0')).join(':');
+        }
+
+        function setTimerPreset(mins, label) {
+            clearInterval(timerInt);
+            timerInt = null;
+            timerDefault = mins * 60;
+            timerSeconds = timerDefault;
+            document.getElementById('timer-mode-badge').textContent = label;
+            document.getElementById('timer-display').textContent = formatTimer(timerSeconds);
+            updateTimerBtn(false);
+        }
+
+        function toggleTimer() {
+            if (timerInt) {
+                clearInterval(timerInt);
+                timerInt = null;
+                updateTimerBtn(false);
+            } else {
+                updateTimerBtn(true);
+                timerInt = setInterval(() => {
+                    if (timerSeconds > 0) {
+                        timerSeconds--;
+                        document.getElementById('timer-display').textContent = formatTimer(timerSeconds);
+                    } else {
+                        clearInterval(timerInt);
+                        timerInt = null;
+                        updateTimerBtn(false);
+                        showToast('Waktu sesi selesai! Berhenti bekerja dan istirahat.', 'success');
+                    }
+                }, 1000);
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerInt);
+            timerInt = null;
+            timerSeconds = timerDefault;
+            document.getElementById('timer-display').textContent = formatTimer(timerSeconds);
+            updateTimerBtn(false);
+        }
+
+        function updateTimerBtn(running) {
+            const btn = document.getElementById('btn-timer-toggle');
+            btn.className = running
+                ? 'px-5 py-2.5 rounded-xl bg-amber-600 text-white font-bold text-xs flex items-center gap-1.5'
+                : 'px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-xs flex items-center gap-1.5';
+            btn.innerHTML = running
+                ? `<i data-lucide="pause" class="w-4 h-4"></i><span>Jeda</span>`
+                : `<i data-lucide="play" class="w-4 h-4"></i><span>Mulai Fokus</span>`;
+            lucide.createIcons();
+        }
+
+        function evaluateRadar() {
+            const src = document.getElementById('radar-source').value;
+            const prof = document.getElementById('radar-profit').value;
+            const res = document.getElementById('radar-result');
+            res.classList.remove('hidden');
+
+            if (src === 'segandoel' || prof === 'no') {
+                res.className = 'p-3.5 rounded-xl border border-rose-500/40 bg-rose-500/10 text-rose-200 text-xs leading-relaxed';
+                res.innerHTML = `<strong>TOLAK HALUS / DELEGASIKAN!</strong> Jangan korbankan uang dapur, WiFi, dan ketenangan keluargamu demi gesekan sosial tanpa profit. Gunakan template WA penasihat di bawah.`;
+            } else {
+                res.className = 'p-3.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-200 text-xs leading-relaxed';
+                res.innerHTML = `<strong>GAS EKSEKUSI SESUAI ZONA!</strong> Jika itu tugas operasional berulang (seperti racik harian Juice True atau teknis lapangan outbound), tetap delegasikan ke istri/kru pakai SOP.`;
+            }
+        }
+
+        function copyText(id) {
+            const txt = document.getElementById(id).textContent;
+            const ta = document.createElement('textarea');
+            ta.value = txt;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showToast('Template WA disalin!', 'success');
+        }
+
+        // ==========================================
+        // 8. NAVIGATION, SHEETS SYNC & BACKUP
+        // ==========================================
+        function switchView(viewName) {
+            ['cashflow', 'kanban', 'radar', 'cloud'].forEach(v => {
+                document.getElementById(`view-${v}`).classList.toggle('hidden', v !== viewName);
+                const btn = document.getElementById(`nav-${v}`);
+                btn.className = v === viewName
+                    ? 'nav-btn py-3 flex flex-col items-center justify-center gap-1 text-emerald-400'
+                    : 'nav-btn py-3 flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-200';
+            });
+            lucide.createIcons();
+        }
+
+        function saveGasUrl() {
+            state.gasUrl = document.getElementById('gas-url-input').value.trim();
+            saveState();
+            showToast('URL Google Apps Script tersimpan!', 'success');
+        }
+
+        function copyGasCode() {
+            const code = document.getElementById('gas-code-block').textContent;
+            const ta = document.createElement('textarea');
+            ta.value = code;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showToast('Kode Code.gs disalin!', 'success');
+        }
+
+        function postToGas(payload) {
+            if (!state.gasUrl) return;
+            fetch(state.gasUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify(payload)
+            }).catch(() => {});
+        }
+
+        function syncSnapshotSilent() {
+            if (!state.gasUrl) return;
+            postToGas({
+                action: 'save_state',
+                state: getSnapshotPayload()
+            });
+        }
+
+        function pushSingleToGas(entry) {
+            if (!state.gasUrl) return;
+            postToGas({
+                action: 'append_log',
+                entry: entry,
+                state: getSnapshotPayload()
+            });
+        }
+
+        function pushStateToGas() {
+            if (!state.gasUrl) {
+                switchView('cloud');
+                showToast('Masukkan URL Google Apps Script dulu.', 'info');
+                return;
+            }
+            postToGas({
+                action: 'save_state',
+                state: getSnapshotPayload()
+            });
+            showToast('Snapshot state dikirim ke sheet state!', 'success');
+        }
+
+        function pullFromGoogleSheet() {
+            if (!state.gasUrl) {
+                switchView('cloud');
+                showToast('Masukkan URL Google Apps Script dulu.', 'info');
+                return;
+            }
+            showToast('Menarik data dari Google Sheets...', 'info');
+            fetch(state.gasUrl)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data || data.status !== 'ok') {
+                        showToast('Gagal membaca data dari Sheets.', 'error');
+                        return;
+                    }
+                    if (data.state) {
+                        state = {
+                            ...state,
+                            ...data.state,
+                            envelopeTargets: { ...state.envelopeTargets, ...(data.state.envelopeTargets || {}) },
+                            envelopes: { ...state.envelopes, ...(data.state.envelopes || {}) },
+                            zoneChecklist: { ...state.zoneChecklist, ...(data.state.zoneChecklist || {}) }
+                        };
+                    }
+                    if (Array.isArray(data.logs) && data.logs.length > 0) {
+                        state.logs = data.logs.map((item, idx) => ({
+                            id: Date.now() + idx,
+                            time: item.time ? new Date(item.time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '--:--',
+                            type: item.type || 'Log',
+                            category: item.category || '-',
+                            text: item.text || '-',
+                            amount: Number(item.amount || 0),
+                            color: Number(item.amount || 0) < 0 ? 'rose' : 'emerald'
+                        }));
+                    }
+                    saveState();
+                    renderAll();
+                    showToast('Data terbaru berhasil ditarik dari Google Sheets!', 'success');
+                })
+                .catch(() => {
+                    showToast('Cek izin akses Web App (Anyone) lalu coba lagi.', 'error');
+                });
+        }
+
+        function syncToGoogleSheet() {
+            if (!state.gasUrl) {
+                switchView('cloud');
+                showToast('Masukkan URL Google Apps Script dulu di menu ini.', 'info');
+                return;
+            }
+            pushStateToGas();
+        }
+
+        function exportJsonData() {
+            const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `pocket_command_family_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('File backup JSON diunduh!', 'success');
+        }
+
+        function importJsonData(ev) {
+            const file = ev.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed && parsed.envelopes) {
+                        state = {
+                            ...JSON.parse(JSON.stringify(defaultState)),
+                            ...parsed,
+                            envelopeTargets: { ...defaultState.envelopeTargets, ...(parsed.envelopeTargets || {}) },
+                            envelopes: { ...defaultState.envelopes, ...(parsed.envelopes || {}) },
+                            zoneChecklist: { ...defaultState.zoneChecklist, ...(parsed.zoneChecklist || {}) }
+                        };
+                        saveState();
+                        syncSnapshotSilent();
+                        renderAll();
+                        showToast('Data berhasil dipulihkan!', 'success');
+                    }
+                } catch {
+                    showToast('Format file tidak valid.', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function openResetAllToZeroModal() {
+            openModal('Reset Total ke Nol (Mulai dari Awal)', `
+                <div class="space-y-4">
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Tindakan ini akan mengosongkan <strong>saldo & terpakai semua pos</strong>, <strong>riwayat log</strong>, <strong>tabungan target</strong>, dan <strong>hitungan cicilan lunas</strong> menjadi <strong>0</strong> agar kamu bisa mulai dari angka aslimu. URL Google Apps Script dan target kustommu tetap disimpan.
+                    </p>
+                    <div class="flex gap-2">
+                        <button onclick="closeModal()" class="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs">
+                            Batal
+                        </button>
+                        <button onclick="confirmResetAllToZero()" class="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs">
+                            Ya, Kosongkan ke Nol
+                        </button>
+                    </div>
+                </div>
+            `);
+        }
+
+        function confirmResetAllToZero() {
+            const savedGasUrl = state.gasUrl || '';
+            const currentZone = state.activeZone || 'kasembon';
+
+            state = {
+                activeZone: currentZone,
+                mission500Savings: 0,
+                mission500Target: state.mission500Target || 500000000,
+                debtPaidMonths: 0,
+                debtTotalAmount: state.debtTotalAmount || 90000000,
+                debtMonthlyAmount: state.debtMonthlyAmount || 9000000,
+                gasUrl: savedGasUrl,
+                envelopeTargets: { ...state.envelopeTargets },
+                envelopes: {
+                    dapur: { allocated: 0, spent: 0 },
+                    utilitas: { allocated: 0, spent: 0 },
+                    bank: { allocated: 0, spent: 0 },
+                    modal: { allocated: 0, spent: 0 }
+                },
+                zoneChecklist: state.zoneChecklist,
+                kanban: state.kanban,
+                logs: []
+            };
+
+            saveState();
+            syncSnapshotSilent();
+            renderAll();
+            closeModal();
+            showToast('Semua data pos, log, tabungan & cicilan di-reset ke 0!', 'success');
+        }
+
+        function openModal(title, html) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-body').innerHTML = html;
+            const m = document.getElementById('custom-modal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            lucide.createIcons();
+        }
+
+        function closeModal() {
+            const m = document.getElementById('custom-modal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function showToast(msg, type = 'info') {
+            const box = document.getElementById('toast-container');
+            const el = document.createElement('div');
+            const bg = type === 'success' ? 'bg-emerald-600 text-white' : type === 'error' ? 'bg-rose-600 text-white' : 'bg-slate-800 text-slate-100 border border-slate-700';
+            el.className = `${bg} px-4 py-3 rounded-2xl shadow-xl text-xs font-bold text-center pointer-events-auto transition-all duration-300`;
+            el.textContent = msg;
+            box.appendChild(el);
+            setTimeout(() => {
+                el.style.opacity = '0';
+                setTimeout(() => el.remove(), 300);
+            }, 2800);
+        }
+    </script>
+</body>
+</html>
